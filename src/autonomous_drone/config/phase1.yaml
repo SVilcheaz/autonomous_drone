@@ -1,0 +1,25 @@
+waypoint_mission:
+  ros__parameters:
+    auto_start: false
+    fmu_namespace: /fmu
+    target_system: 1
+    target_component: 1
+    source_system: 254
+    source_component: 191
+    control_rate_hz: 20.0
+    prestream_s: 1.5
+    takeoff_height_m: 2.0
+    # Triplets: north, east, UP in metres, relative to the starting position.
+    # Takeoff happens first. Four 20 m legs form a square and return overhead.
+    waypoint_offsets_m: [20.0, 0.0, 2.0, 20.0, 20.0, 2.0, 0.0, 20.0, 2.0, 0.0, 0.0, 2.0]
+    position_tolerance_m: 0.3
+    speed_tolerance_m_s: 0.35
+    hold_time_s: 2.0
+    waypoint_timeout_s: 45.0
+    command_retry_s: 1.0
+    command_timeout_s: 10.0
+    telemetry_timeout_s: 3.0
+    landing_timeout_s: 60.0
+    # The far corner is sqrt(20^2 + 20^2) = 28.3 m from the start.
+    max_radius_m: 35.0
+    max_height_m: 10.0
