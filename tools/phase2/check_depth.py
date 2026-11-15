@@ -23,6 +23,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--seconds', type=float, default=15)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--max-age-s', type=float, default=.5)
     args = parser.parse_args()
     rclpy.init()
     node = rclpy.create_node('phase2_depth_contract_check')
@@ -89,8 +90,12 @@ def main():
             errors.append('depth is not aligned with received left CameraInfo capture stamps')
         if not receipts or time.monotonic() - receipts[-1] > .5 or state['fresh'] is not True:
             errors.append('depth is not currently fresh')
+        if not ages or any(age < -.01 or age > args.max_age_s for age in ages):
+            errors.append('received depth capture ages exceed the shared-clock contract')
         if not roi_medians:
             errors.append('no valid depth in the saved textured-wall ROI')
+        sample = state['latest']
+        sample_valid = np.isfinite(sample) if sample is not None else None
         report = {
             'scope': 'Jetson stereo depth bringup only; full range/coverage/flight gates remain pending',
             'passed': not errors, 'errors': errors, 'depth_frames': len(stamps),
@@ -105,6 +110,10 @@ def main():
             'diagnostic_roi_xywh': [270,80,90,60],
             'diagnostic_roi_median_depth_m': float(np.median(roi_medians)) if roi_medians else None,
             'diagnostic_roi_mean_valid_fraction': float(np.mean(coverage)) if coverage else None,
+            'sample_valid_fraction': float(np.mean(sample_valid)) if sample is not None else None,
+            'sample_nan_fraction': float(np.mean(np.isnan(sample))) if sample is not None else None,
+            'sample_finite_range_m': [float(sample[sample_valid].min()), float(sample[sample_valid].max())]
+                if sample is not None and np.any(sample_valid) else None,
             'note': 'ROI observations are diagnostic; this tool does not establish known surface distance or complete Phase 2 acceptance.',
         }
         args.output.parent.mkdir(parents=True, exist_ok=True)

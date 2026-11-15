@@ -9,3 +9,4 @@ metric_depth:
     max_capture_age_s: 0.5
     receipt_timeout_s: 0.5
     queue_size: 5
+    min_horizontal_gradient_rms: 2.0

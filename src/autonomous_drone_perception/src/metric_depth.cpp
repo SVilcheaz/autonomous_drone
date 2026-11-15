@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <functional>
@@ -5,6 +6,7 @@
 #include <stdexcept>
 
 #include "autonomous_drone_perception/depth_conversion.hpp"
+#include "autonomous_drone_perception/depth_validity.hpp"
 #include "message_filters/subscriber.h"
 #include "message_filters/sync_policies/exact_time.h"
 #include "message_filters/synchronizer.h"
@@ -17,7 +19,8 @@ class MetricDepth : public rclcpp::Node
 {
   using Disparity = stereo_msgs::msg::DisparityImage;
   using Info = sensor_msgs::msg::CameraInfo;
-  using Policy = message_filters::sync_policies::ExactTime<Disparity, Info, Info>;
+  using Image = sensor_msgs::msg::Image;
+  using Policy = message_filters::sync_policies::ExactTime<Disparity, Info, Info, Image, Image>;
   using Steady = std::chrono::steady_clock;
 
 public:
@@ -30,12 +33,14 @@ public:
     limits_.right_frame = declare_parameter("right_frame", "stereo_right_optical_frame");
     max_age_ = declare_parameter("max_capture_age_s", 0.5);
     receipt_timeout_ = declare_parameter("receipt_timeout_s", 0.5);
+    min_gradient_rms_ = declare_parameter("min_horizontal_gradient_rms", 2.0);
     const int queue = declare_parameter("queue_size", 5);
     if (!std::isfinite(max_age_) || max_age_ <= 0 ||
       !std::isfinite(receipt_timeout_) || receipt_timeout_ <= 0 || queue < 1 || queue > 20 ||
       !std::isfinite(limits_.min_depth_m) || !std::isfinite(limits_.max_depth_m) ||
       limits_.min_depth_m <= 0 || limits_.max_depth_m <= limits_.min_depth_m ||
-      !std::isfinite(limits_.max_disparity_px) || limits_.max_disparity_px <= 0)
+      !std::isfinite(limits_.max_disparity_px) || limits_.max_disparity_px <= 0 ||
+      !std::isfinite(min_gradient_rms_) || min_gradient_rms_ <= 0 || min_gradient_rms_ > 255)
     {
       throw std::invalid_argument("invalid metric depth bounds or queue size");
     }
@@ -45,10 +50,13 @@ public:
     disparity_.subscribe(this, "disparity", qos.get_rmw_qos_profile());
     left_.subscribe(this, "left/camera_info", qos.get_rmw_qos_profile());
     right_.subscribe(this, "right/camera_info", qos.get_rmw_qos_profile());
+    left_image_.subscribe(this, "left/image_rect", qos.get_rmw_qos_profile());
+    right_image_.subscribe(this, "right/image_rect", qos.get_rmw_qos_profile());
     sync_ = std::make_unique<message_filters::Synchronizer<Policy>>(
-      Policy(queue), disparity_, left_, right_);
+      Policy(queue), disparity_, left_, right_, left_image_, right_image_);
     sync_->registerCallback(std::bind(&MetricDepth::on_disparity, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+      std::placeholders::_4, std::placeholders::_5));
     timer_ = create_wall_timer(std::chrono::milliseconds(100), [this]() {
         const auto now = sensor_now();
         std_msgs::msg::Bool fresh;
@@ -73,7 +81,8 @@ private:
     return now;
   }
 
-  void on_disparity(Disparity::ConstSharedPtr d, Info::ConstSharedPtr l, Info::ConstSharedPtr r)
+  void on_disparity(Disparity::ConstSharedPtr d, Info::ConstSharedPtr l, Info::ConstSharedPtr r,
+    Image::ConstSharedPtr left_image, Image::ConstSharedPtr right_image)
   {
     const auto now = sensor_now();
     const auto stamp = rclcpp::Time(d->header.stamp).nanoseconds();
@@ -87,6 +96,11 @@ private:
     }
     try {
       auto depth = metric_depth(*d, *l, *r, limits_);
+      if (right_image->header.frame_id != limits_.right_frame) {
+        throw std::invalid_argument("unexpected right texture image frame");
+      }
+      reject_unsupported_depth(depth, *left_image, *right_image, -r->p[3], min_gradient_rms_,
+        std::min(limits_.max_disparity_px, static_cast<double>(d->max_disparity)));
       depth_pub_->publish(std::move(depth));
       last_stamp_ = stamp;
       last_receipt_ = Steady::now();
@@ -100,11 +114,13 @@ private:
 
   DepthLimits limits_;
   double max_age_{}, receipt_timeout_{};
+  double min_gradient_rms_{};
   bool have_depth_{false};
   int64_t last_stamp_{-1}, last_now_{0};
   Steady::time_point last_receipt_{};
   message_filters::Subscriber<Disparity> disparity_;
   message_filters::Subscriber<Info> left_, right_;
+  message_filters::Subscriber<Image> left_image_, right_image_;
   std::unique_ptr<message_filters::Synchronizer<Policy>> sync_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr depth_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr fresh_pub_;

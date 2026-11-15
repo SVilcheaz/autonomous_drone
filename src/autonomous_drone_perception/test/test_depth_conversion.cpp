@@ -36,8 +36,9 @@ protected:
   }
   void pixels(std::vector<float> values)
   {
-    disparity.image.data.resize(values.size() * sizeof(float));
-    std::memcpy(disparity.image.data.data(), values.data(), disparity.image.data.size());
+    const size_t byte_count = values.size() * sizeof(float);
+    disparity.image.data.resize(byte_count);
+    std::memcpy(disparity.image.data.data(), values.data(), byte_count);
   }
   std::vector<float> convert()
   {

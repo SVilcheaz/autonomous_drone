@@ -8,7 +8,7 @@ find_package(stereo_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(message_filters REQUIRED)
 
-add_library(depth_conversion src/depth_conversion.cpp)
+add_library(depth_conversion src/depth_conversion.cpp src/depth_validity.cpp)
 target_compile_features(depth_conversion PUBLIC cxx_std_17)
 target_compile_options(depth_conversion PRIVATE -Wall -Wextra -Wpedantic)
 target_include_directories(depth_conversion PUBLIC
@@ -31,6 +31,8 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   ament_add_gtest(test_depth_conversion test/test_depth_conversion.cpp)
   target_link_libraries(test_depth_conversion depth_conversion)
+  ament_add_gtest(test_depth_validity test/test_depth_validity.cpp)
+  target_link_libraries(test_depth_validity depth_conversion)
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
   add_test(NAME test_metric_depth_transport COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/test/test_metric_depth_transport.py $<TARGET_FILE:metric_depth>)

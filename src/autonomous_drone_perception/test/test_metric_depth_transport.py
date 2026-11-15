@@ -34,6 +34,8 @@ class MetricDepthTransport(unittest.TestCase):
         self.left_pub = self.node.create_publisher(CameraInfo, '/phase2_contract_test/left/camera_info', qos_profile_sensor_data)
         self.right_pub = self.node.create_publisher(CameraInfo, '/phase2_contract_test/right/camera_info', qos_profile_sensor_data)
         self.disparity_pub = self.node.create_publisher(DisparityImage, '/phase2_contract_test/disparity', qos_profile_sensor_data)
+        self.left_image_pub = self.node.create_publisher(Image, '/phase2_contract_test/left/image_rect', qos_profile_sensor_data)
+        self.right_image_pub = self.node.create_publisher(Image, '/phase2_contract_test/right/image_rect', qos_profile_sensor_data)
         self.depths, self.fresh = [], []
         self.subs = [
             self.node.create_subscription(Image, '/phase2_contract_test/depth', self.depths.append, qos_profile_sensor_data),
@@ -54,7 +56,7 @@ class MetricDepthTransport(unittest.TestCase):
         print(self.log.read())
         self.log.close()
 
-    def pump(self, duration, frames=True, clock=True, offset_ns=0):
+    def pump(self, duration, frames=True, clock=True, offset_ns=0, images=True):
         end = time.monotonic() + duration
         while time.monotonic() < end:
             if clock:
@@ -67,7 +69,7 @@ class MetricDepthTransport(unittest.TestCase):
                 left = CameraInfo()
                 left.header.stamp.sec, left.header.stamp.nanosec = divmod(self.now_ns + offset_ns, 1_000_000_000)
                 left.header.frame_id = 'stereo_left_optical_frame'
-                left.width, left.height = 8, 1
+                left.width, left.height = 160, 12
                 left.r = [1., 0., 0., 0., 1., 0., 0., 0., 1.]
                 left.p = [400., 0., 4., 0., 0., 400., 0., 0., 0., 0., 1., 0.]
                 right = copy.deepcopy(left)
@@ -77,13 +79,25 @@ class MetricDepthTransport(unittest.TestCase):
                 disparity.header = copy.deepcopy(right.header)
                 disparity.f, disparity.t = 400., 48.
                 disparity.max_disparity = 64.
-                disparity.image.width, disparity.image.height = 8, 1
+                disparity.image.width, disparity.image.height = left.width, left.height
                 disparity.image.encoding = '32FC1'
-                disparity.image.step = 32
-                disparity.image.data = struct.pack('<8f', 24, 24, 24, 0, -1, float('nan'), float('inf'), 80)
+                disparity.image.step = left.width * 4
+                values = [24.] * (left.width * left.height)
+                values[5*left.width+90:5*left.width+98] = [24, 24, 24, 0, -1, float('nan'), float('inf'), 80]
+                disparity.image.data = struct.pack('<' + 'f'*len(values), *values)
+                left_image = Image()
+                left_image.header = copy.deepcopy(left.header)
+                left_image.width, left_image.height = left.width, left.height
+                left_image.encoding, left_image.step = 'mono8', left.width
+                left_image.data = bytes([0, 255] * (left.width*left.height//2))
+                right_image = copy.deepcopy(left_image)
+                right_image.header = copy.deepcopy(right.header)
                 self.left_pub.publish(left)
                 self.right_pub.publish(right)
                 self.disparity_pub.publish(disparity)
+                if images:
+                    self.left_image_pub.publish(left_image)
+                    self.right_image_pub.publish(right_image)
             stop = time.monotonic() + .02
             while time.monotonic() < stop:
                 rclpy.spin_once(self.node, timeout_sec=.005)
@@ -94,10 +108,20 @@ class MetricDepthTransport(unittest.TestCase):
         self.assertTrue(self.fresh[-1])
         depth = self.depths[-1]
         self.assertEqual(depth.header.frame_id, 'stereo_left_optical_frame')
-        values = struct.unpack('<8f', bytes(depth.data))
+        offset = 5*depth.step+90*4
+        values = struct.unpack('<8f', bytes(depth.data[offset:offset+32]))
         self.assertEqual(values[:3], (2., 2., 2.))
         self.assertTrue(all(x != x for x in values[3:]))
         self.assertLessEqual(abs(self.now_ns - (depth.header.stamp.sec * 10**9 + depth.header.stamp.nanosec)), 40_000_000)
+
+        # A new disparity and CameraInfo cannot authorize reuse of old images.
+        self.pump(.15, images=False)
+        count = len(self.depths)
+        self.pump(.5, images=False)
+        self.assertFalse(self.fresh[-1])
+        self.assertEqual(len(self.depths), count)
+        self.pump(.4)
+        self.assertTrue(self.fresh[-1])
 
         self.pump(.15, frames=False)
         count = len(self.depths)
