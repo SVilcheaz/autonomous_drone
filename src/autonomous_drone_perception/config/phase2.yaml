@@ -1,0 +1,11 @@
+metric_depth:
+  ros__parameters:
+    use_sim_time: true
+    min_depth_m: 0.75
+    max_depth_m: 5.0
+    max_disparity_px: 64.0
+    left_frame: stereo_left_optical_frame
+    right_frame: stereo_right_optical_frame
+    max_capture_age_s: 0.5
+    receipt_timeout_s: 0.5
+    queue_size: 5
