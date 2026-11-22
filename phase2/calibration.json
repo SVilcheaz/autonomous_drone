@@ -1,0 +1,73 @@
+{
+  "px4_revision": "b12d17f63241e7c875a0394e7b52064ca3a34946",
+  "gazebo_models_revision": "a15af9628536914ff7201c992fce5e3cb5d70db9",
+  "source_sha256": {
+    "base": "6eccbff824a0e1ceaaf3bc12fe18cd0eb3ece890bf995a2607b477c3d2ae5772",
+    "motors": "cb76a4afd439f253a8c516b1fcd3528f80347619cfa46bebb620557054fbf125",
+    "existing_default_world": "b3ed3ddf44b338d789f3099116ac9df1b7bb9b398cf7875880a22066bcaa556c"
+  },
+  "model": "x500_0",
+  "world": "phase2_validation",
+  "image_size": [
+    640,
+    480
+  ],
+  "image_rate_hz": 20,
+  "fx": 400.0,
+  "fy": 400.0,
+  "cx": 320,
+  "cy": 240,
+  "baseline_m": 0.12,
+  "distortion_k1_k2_p1_p2_k3": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "image_noise": "none (initial ideal pinhole validation rig)",
+  "left_projection_tx": 0,
+  "right_projection_tx": -48.0,
+  "body_frame": "base_link",
+  "body_axes": "FLU",
+  "optical_axes": "x right, y down, z forward",
+  "left_pose_body": [
+    0.25,
+    0.06,
+    0.14,
+    -1.5707963267948966,
+    0,
+    -1.5707963267948966
+  ],
+  "right_pose_body": [
+    0.25,
+    -0.06,
+    0.14,
+    -1.5707963267948966,
+    0,
+    -1.5707963267948966
+  ],
+  "imu_frame": "base_link",
+  "imu_rate_hz": 250.0,
+  "imu_noise_per_sample": {
+    "angular_velocity": {
+      "x": 0.0008726646,
+      "y": 0.0008726646,
+      "z": 0.0008726646
+    },
+    "linear_acceleration": {
+      "x": 0.00637,
+      "y": 0.00637,
+      "z": 0.00686
+    }
+  },
+  "imu_note": "Original colocated FLU IMU reused unchanged; specific force includes gravity response. Rates are in simulation time.",
+  "physics_max_step_s": 0.002,
+  "texture_seed": 20261115,
+  "wall_face_x": {
+    "1": 1.25,
+    "2": 2.25,
+    "4": 4.25
+  },
+  "note": "Generated configuration, not a claim of runtime validation. No PX4/vendor files modified; no flight commanded."
+}

@@ -4,6 +4,13 @@ log/
 __pycache__/
 *.pyc
 *.md
-/phase2
+
+/phase2/models/
+/phase2/worlds/
+/phase2/results/
+/phase2/controller_workspace/
+/phase2/jetson_workspace/
+
 /demos
 /tools
+/phase3/results
