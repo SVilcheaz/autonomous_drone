@@ -1,0 +1,24 @@
+waypoint_mission:
+  ros__parameters:
+    auto_start: false
+    fmu_namespace: /fmu
+    target_system: 1
+    target_component: 1
+    source_system: 254
+    source_component: 191
+    control_rate_hz: 20.0
+    prestream_s: 1.5
+    takeoff_height_m: 1.0
+    # No horizontal travel. The proven controller applies hold_time_s both at
+    # the settled takeoff target and this identical waypoint: >=70 s of hold.
+    waypoint_offsets_m: [0.0, 0.0, 1.0]
+    position_tolerance_m: 0.2
+    speed_tolerance_m_s: 0.3
+    hold_time_s: 35.0
+    waypoint_timeout_s: 100.0
+    command_retry_s: 1.0
+    command_timeout_s: 10.0
+    telemetry_timeout_s: 1.5
+    landing_timeout_s: 60.0
+    max_radius_m: 0.75
+    max_height_m: 1.75

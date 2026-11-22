@@ -110,6 +110,12 @@ public:
         {
           status_ = *msg;
           status_received_ = Steady::now();
+        } else {
+          RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000,
+            "Ignored VehicleStatus: received stamp=%llu, last accepted=%llu, ID=%u/%u expected=%d/%d",
+            static_cast<unsigned long long>(msg->timestamp),
+            static_cast<unsigned long long>(status_.timestamp), msg->system_id, msg->component_id,
+            target_system_, target_component_);
         }
       });
     position_sub_ = create_subscription<VehicleLocalPosition>(

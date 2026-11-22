@@ -5,3 +5,5 @@ __pycache__/
 *.pyc
 *.md
 /phase2
+/demos
+/tools
