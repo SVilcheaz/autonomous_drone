@@ -1,0 +1,42 @@
+{
+  "px4_revision": "b12d17f63241e7c875a0394e7b52064ca3a34946",
+  "px4_msgs_revision": "6cdc4f55d1ce924848905fd63cacdd1bf17f9060",
+  "common_parameters_at_arming": {
+    "UXRCE_DDS_SYNCT": 0,
+    "EKF2_BARO_CTRL": 1,
+    "EKF2_EV_NOISE_MD": 1,
+    "EKF2_EV_DELAY": 0.0,
+    "EKF2_EV_QMIN": 0,
+    "EKF2_EV_POS_X": 0.0,
+    "EKF2_EV_POS_Y": 0.0,
+    "EKF2_EV_POS_Z": 0.0,
+    "EKF2_EVP_NOISE": 0.1,
+    "EKF2_EVV_NOISE": 0.1,
+    "EKF2_EVA_NOISE": 0.1,
+    "COM_DISARM_LAND": 2.0
+  },
+  "profiles": {
+    "gnss_active": {
+      "ulog": "log/phase3_ulog/gnss_active.ulg",
+      "ulog_sha256": "203def526ef4203fa5c0754fac8720f10f9a95adc5f4eb31da4dd87edcc1d339",
+      "flight_index": 1,
+      "parameters_at_arming": {
+        "EKF2_GPS_CTRL": 7,
+        "EKF2_EV_CTRL": 1,
+        "EKF2_HGT_REF": 1,
+        "EKF2_GND_EFF_DZ": 4.0
+      }
+    },
+    "gnss_disabled": {
+      "ulog": "log/phase3_ulog/gnss_disabled_local_only.ulg",
+      "ulog_sha256": "827cb541417f8970d57fccdfdfb08508a21c162862ab97ee22ac9441066f8196",
+      "flight_index": 2,
+      "parameters_at_arming": {
+        "EKF2_GPS_CTRL": 0,
+        "EKF2_EV_CTRL": 3,
+        "EKF2_HGT_REF": 3,
+        "EKF2_GND_EFF_DZ": 0.0
+      }
+    }
+  }
+}

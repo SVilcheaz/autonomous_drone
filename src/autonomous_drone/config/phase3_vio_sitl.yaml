@@ -1,0 +1,23 @@
+waypoint_mission:
+  ros__parameters:
+    auto_start: false
+    fmu_namespace: /fmu
+    target_system: 1
+    target_component: 1
+    source_system: 254
+    source_component: 191
+    control_rate_hz: 20.0
+    prestream_s: 1.5
+    takeoff_height_m: 1.0
+    # Each triplet is north, east and up from the recorded takeoff point.
+    waypoint_offsets_m: [0.4, 0.0, 1.0, 0.0, 0.4, 1.0, 0.0, 0.0, 1.0]
+    position_tolerance_m: 0.15
+    speed_tolerance_m_s: 0.3
+    hold_time_s: 3.0
+    waypoint_timeout_s: 25.0
+    command_retry_s: 1.0
+    command_timeout_s: 10.0
+    telemetry_timeout_s: 1.5
+    landing_timeout_s: 60.0
+    max_radius_m: 0.75
+    max_height_m: 1.75

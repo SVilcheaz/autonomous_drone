@@ -5,6 +5,9 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcl_interfaces REQUIRED)
 find_package(px4_msgs REQUIRED)
+find_package(builtin_interfaces REQUIRED)
+find_package(diagnostic_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 
@@ -18,7 +21,14 @@ ament_target_dependencies(waypoint_mission_lib rclcpp rcl_interfaces px4_msgs st
 
 add_executable(waypoint_mission src/main.cpp)
 target_link_libraries(waypoint_mission waypoint_mission_lib)
-install(TARGETS waypoint_mission_lib waypoint_mission
+
+add_executable(external_vision src/external_vision.cpp)
+target_compile_features(external_vision PRIVATE cxx_std_17)
+target_compile_options(external_vision PRIVATE -Wall -Wextra -Wpedantic)
+target_include_directories(external_vision PRIVATE include)
+ament_target_dependencies(external_vision rclcpp builtin_interfaces diagnostic_msgs nav_msgs px4_msgs)
+
+install(TARGETS waypoint_mission_lib waypoint_mission external_vision
   ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY include/ DESTINATION include)
 install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME})
